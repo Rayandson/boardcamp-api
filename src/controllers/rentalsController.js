@@ -19,45 +19,8 @@ export async function create(req, res) {
 
 export async function findAll(req, res) {
     try {
-        const queryRentals = await connectionDB.query("SELECT * FROM rentals;")
-        const queryCustomers = await connectionDB.query("SELECT * FROM customers;")
-        const queryGames = await connectionDB.query("SELECT * FROM games;")
-        const queryCategories = await connectionDB.query("SELECT * FROM categories;")
-        const rentals = queryRentals.rows;
-        const customers = queryCustomers.rows;
-        const games = queryGames.rows;
-        const categories = queryCategories.rows;
-        const arrayRentals = rentals.map((r) => {
-            let rentalCustomer;
-            let rentalGame;
-            let rentalGameCategory;
-            for(let i=0; i < customers.length; i++) {
-                if(r.customerId === customers[i].id) { 
-                    rentalCustomer = customers[i];
-                }
-            }
-
-            for(let j=0; j < games.length; j++) {
-                console.log(r.gameId)
-                if(r.gameId === games[j].id) {
-                    
-                    rentalGame = games[j];
-                    for(let k=0; k < categories.length; k++) {
-                        if(rentalGame.categoryId === categories[k].id) {
-                            rentalGameCategory = categories[k].name;
-                            break;
-                        }
-                    }
-                    break;
-                }
-            }
-
-            const rentalObj =  {...r, customer:{id: rentalCustomer.id, name: rentalCustomer.name}, game: {id: rentalGame.id, name: rentalGame.name, categoryId: rentalGame.categoryId, categoryName: rentalGameCategory}}
-            return rentalObj;
-        })
-        res.send(arrayRentals);
-        // const rentals = await connectionDB.query('SELECT json_build_object("rentId", r.id, "customerId", r."customerId","gameId", r."gameId", "rentDate", r."rentDate", "daysRented", r."daysRented", "returnDate". r."returnDate", "originalPrice", r."originalPrice", "delayFee", r."delayFee", "customer", json_build_object("customerId", c.id, "name", c.name),"game", json_build_object("gameId", g.id, "name", g.name, "categoryId", g."categoryId", "categoryName", g."categoryName")) FROM rentals r INNER JOIN customers c on c.id = r."customerId" INNER JOIN games g on g.id = r."gameId"')
-        // res.send(rentals.rows)
+        const rentals = await connectionDB.query(`SELECT rentals.*, json_build_object('id', customers.id, 'name', customers.name) AS customer, json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game FROM rentals JOIN customers on customers.id = rentals."customerId" JOIN games on games.id = rentals."gameId" JOIN categories on categories.id = games."categoryId";`)
+        res.send(rentals.rows)
     } catch (err) {
         res.status(500).send(err.message); 
     }
